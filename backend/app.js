@@ -8,32 +8,27 @@ const cors = require('cors');
 
 const app = express();
 
-// Login and Register
+// Initialize passport
 require('./auth/auth');
+app.use(passport.initialize());
+
+// Import Routes
 const login = require('./routes/login');
 const loggedInPage = require('./routes/loggedInUser');
 const bookingRoute = require('./routes/routeSelection');
 const registerRouter = require('./routes/register');
-
-// Import individual seat management routes
 const getAllSeatsRoute = require('./routes/getAllSeats');
 const bookSeatRoute = require('./routes/bookSeat');
 const cancelSeatRoute = require('./routes/cancelSeat');
 
-// DB Config
-const DB_URL = require('./config/keys').MongoURI;
-
-// Connect to MongoDB
-mongoose.connect(DB_URL, {
+// Database Config
+const keys = require('./config/keys');
+mongoose.connect(keys.MongoURI, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 })
-    .then(() => {
-        console.log("Connected to MongoDB");
-    })
-    .catch(err => {
-        throw err;
-    });
+    .then(() => console.log("Connected to MongoDB"))
+    .catch(err => console.error("Database connection error:", err));
 
 // Middleware
 app.use(logger('dev'));
@@ -46,12 +41,10 @@ app.use(cors());
 // Routes
 app.use('/', login);
 app.use('/booking', bookingRoute);
-app.use('/register', registerRouter);  // To register page
-app.use('/user', passport.authenticate('jwt', { session: false }), loggedInPage);  // Secure Route
-
-// Direct Seat Management Routes
-app.use('/api/seats', passport.authenticate('jwt', { session: false }), getAllSeatsRoute);  // GET all seats
-app.use('/api/seats/book', passport.authenticate('jwt', { session: false }), bookSeatRoute);  // POST book seat
-app.use('/api/seats/cancel', passport.authenticate('jwt', { session: false }), cancelSeatRoute);  // POST cancel booking
+app.use('/register', registerRouter);
+app.use('/user', passport.authenticate('jwt', { session: false }), loggedInPage);
+app.use('/api/seats', getAllSeatsRoute);
+app.use('/api/seats/book', bookSeatRoute);
+app.use('/api/seats/cancel', cancelSeatRoute);
 
 module.exports = app;

@@ -15,4 +15,11 @@ passport.use(new JWTstrategy({
     }
 }));
 
+// // jwtConfig.js
+
+// module.exports = {
+//     secretOrKey: 'top_secret'
+// };
+
+
 

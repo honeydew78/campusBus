@@ -1,7 +1,8 @@
+// getAllSeats.js
+
 const express = require('express');
-const passport = require('passport');
 const router = express.Router();
-const Seat = require('../models/Seat'); // Import your Seat model
+const Seat = require('../models/Seat');
 
 // GET /api/seats - Protected route
 const getAllSeats = async (req, res) => {
@@ -18,7 +19,6 @@ const getAllSeats = async (req, res) => {
     }
 };
 
-// Protect the route with JWT authentication
-router.get('/api/seats', passport.authenticate('jwt', { session: false }), getAllSeats);
+router.get('/', getAllSeats);
 
 module.exports = router;

@@ -1,27 +1,22 @@
 const express = require('express');
-const passport = require('passport');
 const router = express.Router();
 const Seat = require('../models/Seat'); // Import your Seat model
 
-// POST /api/seats/book/:seatNumber - Protected route to book a seat
+// POST /api/seats/book - Route to book a seat without authentication
 const bookSeat = async (req, res) => {
-    const { seatNumber } = req.params;
-    const bookedBy = req.user ? req.user._id : null; // Use user ID from req.user, set by passport JWT strategy
-
-    if (!bookedBy) {
-        return res.status(400).json({ error: 'User not authenticated' });
-    }
+    const { seatNumber } = req.body; // Get seatNumber from request body
+    const bookedBy = req.body.bookedBy || 'Anonymous'; // Use user ID from request body or default to 'Anonymous'
 
     try {
         // Find the seat and update its booking status
         const seat = await Seat.findOneAndUpdate(
-            { seatNumber },
+            { seatNumber, isBooked: false }, // Ensure the seat is not already booked
             { isBooked: true, bookedBy, bookingDate: new Date() },
             { new: true }
         );
 
         if (!seat) {
-            return res.status(404).json({ error: 'Seat not found' });
+            return res.status(404).json({ error: 'Seat not found or already booked' });
         }
 
         // Successfully booked the seat
@@ -33,7 +28,7 @@ const bookSeat = async (req, res) => {
     }
 };
 
-// Protect the route with JWT authentication using passport.authenticate
-router.post('/api/seats/book/:seatNumber', passport.authenticate('jwt', { session: false }), bookSeat);
+// Route without authentication
+router.post('/api/seats/book', bookSeat);
 
 module.exports = router;

@@ -1,12 +1,14 @@
+// auth.js
+
 const passport = require('passport');
-const localStrategy = require('passport-local').Strategy;
+const LocalStrategy = require('passport-local').Strategy;
+const JWTStrategy = require('passport-jwt').Strategy;
+const ExtractJWT = require('passport-jwt').ExtractJwt;
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-const JWTstrategy = require('passport-jwt').Strategy;
-const ExtractJWT = require('passport-jwt').ExtractJwt;
 
 // Local Strategy for Login
-passport.use('login', new localStrategy({
+passport.use('login', new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password'
 }, async (email, password, done) => {
@@ -30,14 +32,21 @@ passport.use('login', new localStrategy({
 }));
 
 // JWT Strategy for Protected Routes
-passport.use(new JWTstrategy({
-    secretOrKey: 'top_secret',  // Replace with your secret key
-    jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken() // Extract JWT from Authorization header
-}, async (token, done) => {
+const opts = {
+    jwtFromRequest: ExtractJWT.fromAuthHeaderAsBearerToken(), // Use Authorization header
+    secretOrKey: 'top_secret', // Ensure this matches your JWT signing key
+};
+
+passport.use('jwt', new JWTStrategy(opts, async (jwt_payload, done) => {
     try {
-        // Pass the decoded token user to the next middleware
-        return done(null, token.user);
+        // Optionally, you can verify if the user still exists or is active
+        const user = await User.findById(jwt_payload.id);
+        if (user) {
+            return done(null, user);
+        } else {
+            return done(null, false);
+        }
     } catch (error) {
-        done(error);
+        return done(error, false);
     }
 }));
